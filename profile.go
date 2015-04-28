@@ -19,7 +19,8 @@ import (
 
 const defaultMaxMemory = 32 << 20 //32MB
 
-//	Profile contains  some basic fields for a user profile
+// Profile contains  some basic fields for a user profile
+//
 // TODO (gernest): add validation.
 // TODO (gernest): add a faster serialization implementation
 type Profile struct {
@@ -39,10 +40,10 @@ type Profile struct {
 	UpdatedAt time.Time    `json:"update_at"`
 }
 
-// Photo stores metadata of uploaded file. Photos are kept int two version, the
-// metadata part and the actual data part. They both reside in the same data base
-// but different buckets, but shares the same ID. The ID field must me a uuid v4
-// string.
+// Photo stores metadata of uploaded file. Photos are kept in two version, the
+// metadata part and the actual data part. They both reside in the same database
+// but in different buckets, the two versions shares the same ID. The ID field must
+// be a uuid v4 string.
 type Photo struct {
 	ID         string    `json:"id"`
 	Type       string    `json:"type"`
@@ -59,15 +60,15 @@ type PhotoManager struct {
 	DataBucket string
 }
 
-//Ext is a supported file extension
-type fileUpload struct {
+// FileUpload holds data about the uploaded file
+type FileUpload struct {
 	Body *multipart.File
 	Ext  string
 }
 
 // NewProfile creates a new profile object, using a given userID as its ownID.
 // the reason behind this is, every profile resides in its own database, where as
-// the data base name has a signtature of db/{userID}.db
+// the database name has a signtature of db/{userID}.db
 //
 // I think by doing this it waill make management of profiles easy, and by the way,
 // the profile data is inside the userID bucket, meaning we can store other info that
@@ -78,7 +79,7 @@ func NewProfile(userID string) *Profile {
 	p.ID = userID
 
 	// The db folder must exist, so that we can be able to create our database there
-	// TODO (gernest): Move this elsewhere, but meanwhile I cant think of a beeter
+	// TODO (gernest): Move this elsewhere, but meanwhile I can't think of a beeter
 	// place this should be.
 	err := os.MkdirAll("db", 0700)
 	if err != nil {
@@ -87,9 +88,8 @@ func NewProfile(userID string) *Profile {
 	return p
 }
 
-// Create stores the current profile object inside the userdatabase. The database
-// name is in the form of db/{userID}.db where ueserID is a uuid v4 string. Before
-// saving it sets the CreatedAt field as time.Now().
+// Create stores the current profile object inside the user database. The database
+// name is in the form of db/{userID}.db where ueserID is a uuid v4 string.
 func (p *Profile) Create() error {
 	p.CreatedAt = time.Now()
 	data, err := json.Marshal(p)
@@ -101,8 +101,8 @@ func (p *Profile) Create() error {
 }
 
 // Get retrieves a given profile object from the database and Unmarshall it to the
-// caller. The caller object must have the ID field set. Not that, its wise to call
-// this method on new Profile objects created by NewProfile
+// caller. The caller object must have the ID field set. Note that, its wise to call
+// this method on new Profile objects created by NewProfile.
 func (p *Profile) Get() (*Profile, error) {
 	s := p.store.Get(p.ID, p.ID)
 	if s.Error != nil {
@@ -119,8 +119,7 @@ func (p *Profile) Get() (*Profile, error) {
 // the Profile.ID field must be present, also, the object must have been created
 // prior to calling this method.
 //
-// If the  Profile.ID is not found in the the database, an error is returned. Before
-// saving Profile.UpdatedAt filed is set to time.Now().
+// If the  Profile.ID is not found in the the database, an error is returned.
 func (p *Profile) Update() error {
 	p.UpdatedAt = time.Now()
 	data, err := json.Marshal(p)
@@ -133,15 +132,15 @@ func (p *Profile) Update() error {
 
 // Delete removes a given profile object from the database.
 // TODO (gernest): Accept Profile.ID as argument instead of assuming the underlying
-// caller is as the ID field set.
+// caller  has the ID field set.
 func (p *Profile) Deleta() error {
 	d := p.store.Delete(p.ID, p.ID)
 	return d.Error
 }
 
-// NewPhotomanager initializes a Photomanager object. The meta, and data string
+// NewPhotomanager initializes a PhotoManager object. The meta and data string
 // represent the buckets to store metadata, and actual data about the photos respectively.
-// The db is the database to use.
+// The db is the database name to be used.
 func NewPhotoManager(db, meta, data string) *PhotoManager {
 	return &PhotoManager{
 		store:      nutz.NewStorage(db, 0600, nil),
@@ -160,23 +159,23 @@ func (p *PhotoManager) NewPhoto(profileID string) *Photo {
 	return &Photo{ID: uuid.String(), UploadedBy: profileID}
 }
 
-// GetUploadedFiles extracts uploade files from a given request. The filedName argument
+// GetUploadedFiles extracts uploaded files from a given request. The filedName argument
 // is the name of the form field which has the given files. It rerurns a slice of
-// fileUpload object.
+// FileUpload object.
 //
 // Errors are ignored when iterating over the uploaded files.But the last version of the
 // error encountered is recorded. Only if the slice is empty( meaning we failed to open any
 // uploade file) will the error be returned( error from iteration)
 //
 // TODO (gernest): proper error handling. It will be better if a correct error message
-// containing the files that failed to be extracted..
-func (p *PhotoManager) GetUploadFiles(r *http.Request, fieldName string) ([]*fileUpload, error) {
+// containing details about the files that failed to be extracted..
+func (p *PhotoManager) GetUploadFiles(r *http.Request, fieldName string) ([]*FileUpload, error) {
 	err := r.ParseMultipartForm(defaultMaxMemory)
 	if err != nil {
 		return nil, err
 	}
 	if up := r.MultipartForm.File[fieldName]; len(up) > 0 {
-		var rst []*fileUpload
+		var rst []*FileUpload
 		var ferr error
 		for _, v := range up {
 			f, ferr := v.Open()
@@ -203,9 +202,9 @@ func (p *PhotoManager) GetUploadFiles(r *http.Request, fieldName string) ([]*fil
 	return nil, http.ErrMissingFile
 }
 
-// GetSingleFileUpload retrieves a single file from the reques. The fieldName argument
+// GetSingleFileUpload retrieves a single file from the request. The fieldName argument
 // is the name of the form file field.
-func (p *PhotoManager) GetSingleFileUpload(r *http.Request, fieldName string) (*fileUpload, error) {
+func (p *PhotoManager) GetSingleFileUpload(r *http.Request, fieldName string) (*FileUpload, error) {
 	file, _, err := r.FormFile(fieldName)
 	if err != nil {
 		return nil, err
@@ -215,12 +214,12 @@ func (p *PhotoManager) GetSingleFileUpload(r *http.Request, fieldName string) (*
 
 // TODO (gernest): Add optional parameter for a filter fuction, which will be used
 // to match the supported files.
-func (p *PhotoManager) getFileUpload(file multipart.File) (*fileUpload, error) {
+func (p *PhotoManager) getFileUpload(file multipart.File) (*FileUpload, error) {
 	ext, err := p.getFileExt(file)
 	if err != nil {
 		return nil, err
 	}
-	return &fileUpload{&file, ext}, nil
+	return &FileUpload{&file, ext}, nil
 }
 
 // properly etracting the type of the uploaded file, since I only want to waork
@@ -248,9 +247,8 @@ func (p *PhotoManager) getFileExt(file multipart.File) (string, error) {
 
 }
 
-// SaveMultiple just a convenience, to store multiple uploaded files. Under the hood
-// it just iterate over the given []*fileUpload slice and calls SaveSingle method.
-func (p *PhotoManager) SaveMultiple(files []*fileUpload, profileID string) error {
+// SaveMultiple stores multiple uploaded files.
+func (p *PhotoManager) SaveMultiple(files []*FileUpload, profileID string) error {
 	for _, v := range files {
 		err := p.SaveSingle(v, profileID)
 		if err != nil {
@@ -261,16 +259,16 @@ func (p *PhotoManager) SaveMultiple(files []*fileUpload, profileID string) error
 }
 
 // SaveSingle stores a given file into the database. The file is broken ito two parts
-// metadata, and actual data. Metadata is a Photo object, holding iformation about the file
+// metadata, and actual data. Metadata is a Photo object holding iformation about the file
 // the data is a byte slice of an encoded image.
 //
 // To make retrieving the two parts easy, they are both stored in the same database
-// but dirrenet buckets. The buckets used are the ones specified in the Photomanager
-// instance, where meatadata will go into the MetatadaBucket attribute, and the data
+// but dirrenet buckets. The buckets used are the ones specified in the PhotoManager
+// instance, where meatadata will go into the MetadaBucket attribute, and the data
 // will go into the  the DataBucket attribute.
 //
 // All the two parts shares the same Key, which is generated with the NewPhoto method.
-func (p *PhotoManager) SaveSingle(file *fileUpload, profileID string) error {
+func (p *PhotoManager) SaveSingle(file *FileUpload, profileID string) error {
 	photo := p.NewPhoto(profileID)
 	photo.Type = file.Ext
 	data, err := p.encodePhoto(file)
@@ -298,7 +296,7 @@ func (p *PhotoManager) SaveSingle(file *fileUpload, profileID string) error {
 }
 
 // handles encoding of the uploaded files into a byte slice
-func (p *PhotoManager) encodePhoto(file *fileUpload) ([]byte, error) {
+func (p *PhotoManager) encodePhoto(file *FileUpload) ([]byte, error) {
 	ext := file.Ext
 	switch ext {
 	case "jpg", "jpeg":

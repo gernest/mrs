@@ -14,13 +14,8 @@ func cleanUp() {
 }
 
 func TestProfile_Create(t *testing.T) {
-	ids := []string{
-		"db0668ac-7eba-40dd-56ee-0b1c0b9b415d",
-		"e6917dfe-b4f6-49b8-5628-83dd2a430e9a",
-		"bc5288cf-4120-4f3c-5957-b19e093a12f4",
-	}
 	defer cleanUp()
-	for _, id := range ids {
+	for _, id := range pids {
 		profile := NewProfile(id)
 		err := profile.Create()
 		if err != nil {
@@ -29,13 +24,8 @@ func TestProfile_Create(t *testing.T) {
 	}
 }
 func TestProfile_Get(t *testing.T) {
-	ids := []string{
-		"db0668ac-7eba-40dd-56ee-0b1c0b9b415d",
-		"e6917dfe-b4f6-49b8-5628-83dd2a430e9a",
-		"bc5288cf-4120-4f3c-5957-b19e093a12f4",
-	}
 	defer cleanUp()
-	for _, id := range ids {
+	for _, id := range pids {
 		profile := NewProfile(id)
 		err := profile.Create()
 		if err != nil {
@@ -52,13 +42,8 @@ func TestProfile_Get(t *testing.T) {
 }
 
 func TestProfile_Update(t *testing.T) {
-	ids := []string{
-		"db0668ac-7eba-40dd-56ee-0b1c0b9b415d",
-		"e6917dfe-b4f6-49b8-5628-83dd2a430e9a",
-		"bc5288cf-4120-4f3c-5957-b19e093a12f4",
-	}
 	defer cleanUp()
-	for _, id := range ids {
+	for _, id := range pids {
 		profile := NewProfile(id)
 		err := profile.Create()
 		if err != nil {
@@ -87,13 +72,8 @@ func TestProfile_Update(t *testing.T) {
 }
 
 func TestProfile_Delete(t *testing.T) {
-	ids := []string{
-		"db0668ac-7eba-40dd-56ee-0b1c0b9b415d",
-		"e6917dfe-b4f6-49b8-5628-83dd2a430e9a",
-		"bc5288cf-4120-4f3c-5957-b19e093a12f4",
-	}
 	defer cleanUp()
-	for _, id := range ids {
+	for _, id := range pids {
 		profile := NewProfile(id)
 		err := profile.Create()
 		if err != nil {
@@ -119,7 +99,7 @@ func TestProfile_Delete(t *testing.T) {
 			t.Errorf("Expected %s actual %s", gP.City, up.City)
 		}
 	}
-	for _, id := range ids {
+	for _, id := range pids {
 		profile := NewProfile(id)
 		err := profile.Deleta()
 		if err != nil {
@@ -177,7 +157,7 @@ func TestPhotoManager_GetAllFiles(t *testing.T) {
 
 func TestPhotoManager_SaveSingleFile(t *testing.T) {
 	os.MkdirAll("db", 0700)
-	profileID := "db0668ac-7eba-40dd-56ee-0b1c0b9b415d"
+	profileID := pids[0]
 	pm := NewPhotoManager("db/media.db", "meta", "data")
 	defer cleanUp()
 	req, err := requestWithFile()
@@ -204,7 +184,7 @@ func TestPhotoManager_SaveSingleFile(t *testing.T) {
 
 func TestPhotoManager_SaveMultiple(t *testing.T) {
 	os.MkdirAll("db", 0700)
-	profileID := "db0668ac-7eba-40dd-56ee-0b1c0b9b415d"
+	profileID := pids[0]
 	pm := NewPhotoManager("db/media.db", "meta", "data")
 	defer cleanUp()
 	req, err := requestMuliFile()

@@ -175,7 +175,7 @@ func TestPhotoManager_SaveSingleFile(t *testing.T) {
 		if up.Ext != "jpg" {
 			t.Errorf("Expected jpg actual %s", up.Ext)
 		}
-		err := pm.SaveSingle(up, profileID)
+		_, err := pm.SaveSingle(up, profileID)
 		if err != nil {
 			t.Error(err)
 		}
@@ -202,9 +202,14 @@ func TestPhotoManager_SaveMultiple(t *testing.T) {
 		if len(up) != 3 {
 			t.Errorf("Expected 3 actual %d", len(up))
 		}
-		err := pm.SaveMultiple(up, profileID)
+		files, err := pm.SaveMultiple(up, profileID)
 		if err != nil {
 			t.Error(err)
+		}
+		if err == nil {
+			if len(files) != 3 {
+				t.Errorf("Expected 3 actual %d", len(files))
+			}
 		}
 	}
 }

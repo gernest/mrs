@@ -248,14 +248,17 @@ func (p *PhotoManager) getFileExt(file multipart.File) (string, error) {
 }
 
 // SaveMultiple stores multiple uploaded files.
-func (p *PhotoManager) SaveMultiple(files []*FileUpload, profileID string) error {
+func (p *PhotoManager) SaveMultiple(files []*FileUpload, profileID string) ([]string, error) {
+	var savedFiles []string
 	for _, v := range files {
-		err := p.SaveSingle(v, profileID)
+		id, err := p.SaveSingle(v, profileID)
 		if err != nil {
-			return err
+			return savedFiles, err
 		}
+		savedFiles = append(savedFiles, id)
+
 	}
-	return nil
+	return savedFiles, nil
 }
 
 // SaveSingle stores a given file into the database. The file is broken ito two parts
@@ -268,12 +271,12 @@ func (p *PhotoManager) SaveMultiple(files []*FileUpload, profileID string) error
 // will go into the  the DataBucket attribute.
 //
 // All the two parts shares the same Key, which is generated with the NewPhoto method.
-func (p *PhotoManager) SaveSingle(file *FileUpload, profileID string) error {
+func (p *PhotoManager) SaveSingle(file *FileUpload, profileID string) (string, error) {
 	photo := p.NewPhoto(profileID)
 	photo.Type = file.Ext
 	data, err := p.encodePhoto(file)
 	if err != nil {
-		return err
+		return "", err
 	}
 	photo.Size = len(data)
 	photo.UploadedAt = time.Now()
@@ -281,18 +284,18 @@ func (p *PhotoManager) SaveSingle(file *FileUpload, profileID string) error {
 
 	meta, err := json.Marshal(photo)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	s := p.store.Create(p.MetaBucket, photo.ID, meta)
 	if s.Error != nil {
-		return s.Error
+		return "", s.Error
 	}
 	s = p.store.Create(p.DataBucket, photo.ID, data)
 	if s.Error != nil {
-		return s.Error
+		return "", s.Error
 	}
-	return nil
+	return photo.ID, nil
 }
 
 // handles encoding of the uploaded files into a byte slice

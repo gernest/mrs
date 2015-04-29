@@ -3,6 +3,7 @@ package mrs
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/unrolled/render"
@@ -56,9 +57,45 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		h.rendr.HTML(w, http.StatusOK, "profile_home", data)
 		return
 	}
+}
+func (h *Handlers) ProfilePic(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pid := vars["id"]
+	if r.Method == "POST" {
+		p, err := NewProfile(pid).Get()
+		if h.isAjax(r) {
+			if err != nil {
+				h.rendr.JSON(w, http.StatusOK, &jsonErr{Msg: ErrProfileNotFound.Error()})
+				return
+			}
+			if h.isUpload(r) {
+				up, err := h.pm.GetSingleFileUpload(r, "profile")
+				if err != nil {
+					h.rendr.JSON(w, http.StatusOK, &jsonErr{Msg: "trouble saving"})
+					return
+				}
+				pid, err = h.pm.SaveSingle(up, p.ID)
+				if err != nil {
+					h.rendr.JSON(w, http.StatusNotFound, &jsonErr{Msg: "trouble saving"})
+					return
+				}
+				p.Picture = pid
+				err = p.Update()
+				if err != nil {
+					// TODO (gernest): log this error
+				}
+				h.rendr.JSON(w, http.StatusOK, p)
+				return
+			}
 
+		}
+	}
 }
 
 func (h *Handlers) isAjax(r *http.Request) bool {
 	return r.Header.Get("X-Requested-With") == "XMLHttpRequest"
+}
+
+func (j *Handlers) isUpload(r *http.Request) bool {
+	return strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data")
 }

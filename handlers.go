@@ -10,9 +10,11 @@ import (
 )
 
 var (
+	// ErrProfileNotFound is the message when the user profile is not found
 	ErrProfileNotFound = errors.New("sorry: the requested profile cannot be found")
 )
 
+// Handlers user profile centric handlers
 type Handlers struct {
 	pm    *PhotoManager
 	rendr *render.Render
@@ -58,6 +60,9 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// ProfilePic hadles fileupload for a profile picture. This is inteded to work in
+// ajax only requests.
 func (h *Handlers) ProfilePic(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	pid := vars["id"]
@@ -74,12 +79,12 @@ func (h *Handlers) ProfilePic(w http.ResponseWriter, r *http.Request) {
 					h.rendr.JSON(w, http.StatusOK, &jsonErr{Msg: "trouble saving"})
 					return
 				}
-				pid, err = h.pm.SaveSingle(up, p.ID)
+				pic, err := h.pm.SaveSingle(up, p.ID)
 				if err != nil {
 					h.rendr.JSON(w, http.StatusNotFound, &jsonErr{Msg: "trouble saving"})
 					return
 				}
-				p.Picture = pid
+				p.Picture = pic.ID
 				err = p.Update()
 				if err != nil {
 					// TODO (gernest): log this error
@@ -92,10 +97,39 @@ func (h *Handlers) ProfilePic(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FileUploads handlers multiple file uploads by a given user.
+func (h *Handlers) FileUploads(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pid := vars["id"]
+	if r.Method == "POST" {
+		p, err := NewProfile(pid).Get()
+		if h.isAjax(r) {
+			if err != nil {
+				h.rendr.JSON(w, http.StatusOK, &jsonErr{Msg: ErrProfileNotFound.Error()})
+				return
+			}
+			if h.isUpload(r) {
+				up, err := h.pm.GetUploadFiles(r, "photos")
+				if err != nil {
+					h.rendr.JSON(w, http.StatusOK, &jsonErr{Msg: "trouble saving"})
+					return
+				}
+				ups, err := h.pm.SaveMultiple(up, p.ID)
+				if err != nil {
+					h.rendr.JSON(w, http.StatusOK, &jsonErr{Msg: "trouble saving"})
+					return
+				}
+				h.rendr.JSON(w, http.StatusOK, ups)
+				return
+			}
+
+		}
+	}
+}
 func (h *Handlers) isAjax(r *http.Request) bool {
 	return r.Header.Get("X-Requested-With") == "XMLHttpRequest"
 }
 
-func (j *Handlers) isUpload(r *http.Request) bool {
+func (h *Handlers) isUpload(r *http.Request) bool {
 	return strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data")
 }

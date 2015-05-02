@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gernest/render"
 	"github.com/gorilla/mux"
-	"github.com/unrolled/render"
 )
 
 var (
@@ -49,14 +49,14 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 			h.rendr.JSON(w, http.StatusOK, p)
 			return
 		}
-		data := make(map[string]interface{})
+		data := render.NewTemplateData()
 		if err != nil {
-			data["error"] = ErrProfileNotFound
+			data.Add("error", ErrProfileNotFound)
 			h.rendr.HTML(w, http.StatusNotFound, "404", data)
 			return
 		}
-		data["profile"] = p
-		h.rendr.HTML(w, http.StatusOK, "profile_home", data)
+		data.Add("profile", p)
+		h.rendr.HTML(w, http.StatusOK, "profile/home", data)
 		return
 	}
 }

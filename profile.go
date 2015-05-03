@@ -60,6 +60,12 @@ type PhotoManager struct {
 	DataBucket string
 }
 
+type Config struct {
+	DB         string `json:"dd_name"`
+	MetaBucket string `json:"meta_bucket"`
+	DataBucket string `json:"data_bucket"`
+}
+
 // FileUpload holds data about the uploaded file
 type FileUpload struct {
 	Body *multipart.File

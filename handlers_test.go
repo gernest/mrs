@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/gernest/render"
+	"github.com/gorilla/mux"
 )
 
 var (
@@ -24,7 +24,8 @@ var (
 
 func TestHandlers_Home(t *testing.T) {
 	opts := render.Options{Directory: "fixture"}
-	handle := NewHandlers("imgs.db", "meta", "data", &opts)
+	cfg:=&Config{"imgs.db", "meta", "data"}
+	handle := NewHandlers(cfg, &opts)
 	defer handle.pm.store.DeleteDatabase()
 
 	h := mux.NewRouter()
@@ -128,7 +129,8 @@ func TestHandlers_Home(t *testing.T) {
 
 func TestHandlers_ProfilePic(t *testing.T) {
 	opts := render.Options{Directory: "fixture"}
-	handle := NewHandlers("imgs.db", "meta", "data", &opts)
+	cfg:=&Config{"imgs.db", "meta", "data"}
+	handle := NewHandlers(cfg, &opts)
 	defer handle.pm.store.DeleteDatabase()
 
 	h := mux.NewRouter()
@@ -182,7 +184,8 @@ func TestHandlers_ProfilePic(t *testing.T) {
 
 func TestHandlers_FileUploads(t *testing.T) {
 	opts := render.Options{Directory: "fixture"}
-	handle := NewHandlers("imgs.db", "meta", "data", &opts)
+	cfg:=&Config{"imgs.db", "meta", "data"}
+	handle := NewHandlers(cfg, &opts)
 	defer handle.pm.store.DeleteDatabase()
 
 	h := mux.NewRouter()

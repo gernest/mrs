@@ -25,12 +25,22 @@ type jsonErr struct {
 }
 
 // NewHandlers initialize a new Handlers instance.
-func NewHandlers(db, meta, data string, opt *render.Options) *Handlers {
-	r := render.New()
-	if opt != nil {
-		r = render.New(*opt)
+func NewHandlers(cfg *Config, opt *render.Options, args ...interface{}) *Handlers {
+	p := &Handlers{pm: NewPhotoManager(cfg.DB, cfg.MetaBucket, cfg.DataBucket)}
+	if len(args) > 0 {
+		switch t := args[0].(type) {
+		case *render.Render:
+			p.rendr = t
+			return p
+		}
 	}
-	return &Handlers{pm: NewPhotoManager(db, meta, data), rendr: r}
+	if opt != nil {
+		p.rendr = render.New(*opt)
+		return p
+	}
+	p.rendr = render.New()
+
+	return p
 }
 
 // Home handles the profile home page. It expects in the url path to have the param

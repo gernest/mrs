@@ -24,7 +24,7 @@ var (
 
 func TestHandlers_Home(t *testing.T) {
 	opts := render.Options{Directory: "fixture"}
-	cfg:=&Config{"imgs.db", "meta", "data"}
+	cfg := &Config{"imgs.db", "meta", "data"}
 	handle := NewHandlers(cfg, &opts)
 	defer handle.pm.store.DeleteDatabase()
 
@@ -129,7 +129,7 @@ func TestHandlers_Home(t *testing.T) {
 
 func TestHandlers_ProfilePic(t *testing.T) {
 	opts := render.Options{Directory: "fixture"}
-	cfg:=&Config{"imgs.db", "meta", "data"}
+	cfg := &Config{"imgs.db", "meta", "data"}
 	handle := NewHandlers(cfg, &opts)
 	defer handle.pm.store.DeleteDatabase()
 
@@ -184,7 +184,7 @@ func TestHandlers_ProfilePic(t *testing.T) {
 
 func TestHandlers_FileUploads(t *testing.T) {
 	opts := render.Options{Directory: "fixture"}
-	cfg:=&Config{"imgs.db", "meta", "data"}
+	cfg := &Config{"imgs.db", "meta", "data"}
 	handle := NewHandlers(cfg, &opts)
 	defer handle.pm.store.DeleteDatabase()
 

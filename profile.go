@@ -333,3 +333,19 @@ func (p *PhotoManager) encodePhoto(file *FileUpload) ([]byte, error) {
 	}
 	return nil, errors.New("mrs: file not supported")
 }
+func (p *PhotoManager) GetPhoto(id string) (*Photo, []byte, error) {
+	s := p.store.Get(p.MetaBucket, id)
+	if s.Error != nil {
+		return nil, nil, s.Error
+	}
+	md := &Photo{}
+	err := json.Unmarshal(s.Data, md)
+	if err != nil {
+		return nil, nil, err
+	}
+	d := p.store.Get(p.DataBucket, id)
+	if d.Error != nil {
+		return nil, nil, d.Error
+	}
+	return md, d.Data, nil
+}
